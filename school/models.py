@@ -18,7 +18,7 @@ class Course(models.Model):
     name = models.CharField(verbose_name='название')
     image = models.ImageField(upload_to='photos/', null=True, blank=True)
     description = models.TextField(null=True, blank=True)
-    lessons = models.ManyToManyField(Lesson, verbose_name='уроки', null=True, blank=True)
+    lessons = models.ManyToManyField(Lesson, verbose_name='уроки', blank=True, related_name='courses')
 
     def __str__(self):
         return f'{self.name}'

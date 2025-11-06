@@ -4,14 +4,18 @@ from school.models import Lesson, Course
 
 
 class CourseSerializer(serializers.ModelSerializer):
+    lessons_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
-        fields = '__all__'  # можно указать поля любым итерируемым объектом
+        fields = ['id', 'name', 'image', 'description', 'lessons_count', 'lessons']
+
+    def get_lessons_count(self, instance):
+        return instance.lessons.count()
+
 
 class LessonSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lesson
         fields = '__all__'
-
