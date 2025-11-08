@@ -1,0 +1,31 @@
+[project]
+name = "school-django-rest"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Julia",email = "yulia.2018.ivanova@gmail.com"}
+]
+requires-python = ">=3.12"
+dependencies = [
+    "asgiref (==3.10.0)",
+    "django (==5.2.7)",
+    "django-filter (==25.2)",
+    "djangorestframework (==3.16.1)",
+    "dotenv (==0.9.9)",
+    "pillow (==12.0.0)",
+    "psycopg2-binary (==2.9.11)",
+    "python-dotenv (==1.2.1)",
+    "sqlparse (==0.5.3)",
+    "tzdata (==2025.2)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.packages]]
+include = "school"
+
+[[tool.poetry.packages]]
+include = "users"
