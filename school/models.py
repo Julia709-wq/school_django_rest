@@ -6,6 +6,7 @@ class Lesson(models.Model):
     description = models.TextField(null=True, blank=True)
     image = models.ImageField(upload_to='photos/', null=True, blank=True)
     video = models.CharField(verbose_name='ссылка')
+    owner = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='владелец', related_name='lessons')
 
     def __str__(self):
         return f'{self.name}'
@@ -19,6 +20,7 @@ class Course(models.Model):
     image = models.ImageField(upload_to='photos/', null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     lessons = models.ManyToManyField(Lesson, verbose_name='уроки', blank=True, related_name='courses')
+    owner = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='владелец', related_name='курсы')
 
     def __str__(self):
         return f'{self.name}'
