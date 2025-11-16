@@ -31,3 +31,21 @@ class Course(models.Model):
         verbose_name_plural = 'курсы'
 
 
+class Subscription(models.Model):
+    SUBSCRIPTION_OPTIONS = [
+        ('basic', 'Базовая'),
+        ('advanced', 'Расширенная'),
+        ('family', 'Семейная')
+    ]
+
+    name = models.CharField(choices=SUBSCRIPTION_OPTIONS, default='basic')
+    user = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True)
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.name}"
+
+    class Meta:
+        verbose_name = 'подписка'
+        verbose_name_plural = 'подписки'
+

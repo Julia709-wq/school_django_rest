@@ -1,14 +1,19 @@
-from rest_framework import viewsets, generics
+from django.template.context_processors import request
+from rest_framework import viewsets, generics, status
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
 
-from school.models import Course, Lesson
+from school.models import Course, Lesson, Subscription
 from school.serializers import CourseSerializer, LessonSerializer
 from users.permissions import IsModer, IsOwner, IsOwnerAndNotModer
+from school.paginators import SchoolPaginator
 
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
     queryset = Course.objects.all()
+    pagination_class = SchoolPaginator
 
     def perform_create(self, serializer):
         course = serializer.save()
@@ -40,6 +45,7 @@ class LessonListAPIView(generics.ListAPIView):
     serializer_class = LessonSerializer
     queryset = Lesson.objects.all()
     permission_classes = [AllowAny, ]
+    pagination_class = SchoolPaginator
 
 class LessonRetrieveAPIView(generics.RetrieveAPIView):
     serializer_class = LessonSerializer
@@ -56,6 +62,24 @@ class LessonDestroyAPIView(generics.DestroyAPIView):
     permission_classes = (IsAuthenticated, IsOwner | ~IsModer)
 
 
+class SubscriptionAPIView(generics.CreateAPIView):
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        course_id = request.data.get('course_id')
+        course_item = get_object_or_404(Course, id=course_id)
 
+        subs_item = Subscription.objects.filter(user=user, course=course_item)
+
+        if subs_item.exists():
+            subs_item.delete()
+            message = 'Подписка удалена'
+        else:
+            Subscription.objects.create(
+                user=user,
+                course=course_item
+            )
+            message = 'Подписка активирована'
+
+        return Response({"message": message}, status=status.HTTP_200_OK)
 
 
