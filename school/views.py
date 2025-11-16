@@ -1,9 +1,9 @@
 from rest_framework import viewsets, generics
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from school.models import Course, Lesson
 from school.serializers import CourseSerializer, LessonSerializer
-from users.permissions import IsModer, IsOwner
+from users.permissions import IsModer, IsOwner, IsOwnerAndNotModer
 
 
 class CourseViewSet(viewsets.ModelViewSet):
@@ -12,8 +12,9 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         course = serializer.save()
-        course.owner = self.request.user
-        course.save()
+        if self.request.user.is_authenticated:
+            course.owner = self.request.user
+            course.save()
 
     def get_permissions(self):
         if self.action == "create":
@@ -21,7 +22,7 @@ class CourseViewSet(viewsets.ModelViewSet):
         elif self.action in ["update", "retrieve"]:
             self.permission_classes = [IsModer | IsOwner,]
         elif self.action == "destroy":
-            self.permission_classes = [~IsModer, IsOwner,]
+            self.permission_classes = [IsOwnerAndNotModer, ]
         return super().get_permissions()
 
 
@@ -31,12 +32,14 @@ class LessonCreateAPIView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         lesson = serializer.save()
-        lesson.owner = self.request.user
-        lesson.save()
+        if self.request.user.is_authenticated:
+            lesson.owner = self.request.user
+            lesson.save()
 
 class LessonListAPIView(generics.ListAPIView):
     serializer_class = LessonSerializer
     queryset = Lesson.objects.all()
+    permission_classes = [AllowAny, ]
 
 class LessonRetrieveAPIView(generics.RetrieveAPIView):
     serializer_class = LessonSerializer
@@ -51,6 +54,7 @@ class LessonUpdateAPIView(generics.UpdateAPIView):
 class LessonDestroyAPIView(generics.DestroyAPIView):
     queryset = Lesson.objects.all()
     permission_classes = (IsAuthenticated, IsOwner | ~IsModer)
+
 
 
 
