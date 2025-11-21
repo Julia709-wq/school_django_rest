@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from school.models import Lesson, Course, Subscription
+from school.models import Lesson, Course, Subscription, CoursePayment
 from school.validators import LinkValidator
 
 
@@ -44,4 +44,16 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'user', 'course', 'is_subscribed']
 
 
+class CoursePaymentSerializer(serializers.ModelSerializer):
+    course_name = serializers.CharField(source='course.name', read_only=True)
 
+    class Meta:
+        model = CoursePayment
+        fields = [
+            'id', 'course', 'course_name', 'amount', 'payment_url',
+            'status', 'created_at', 'stripe_session_id'
+        ]
+        read_only_fields = [
+            'id', 'course_name', 'amount', 'payment_url',
+            'status', 'created_at', 'stripe_session_id'
+        ]

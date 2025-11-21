@@ -1,13 +1,15 @@
-from django.template.context_processors import request
 from rest_framework import viewsets, generics, status
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
-from school.models import Course, Lesson, Subscription
-from school.serializers import CourseSerializer, LessonSerializer
+from school.models import Course, Lesson, Subscription, CoursePayment
+from school.serializers import CourseSerializer, LessonSerializer, CoursePaymentSerializer
+from school.services import create_course_payment
 from users.permissions import IsModer, IsOwner, IsOwnerAndNotModer
 from school.paginators import SchoolPaginator
+
+
 
 
 class CourseViewSet(viewsets.ModelViewSet):
@@ -82,4 +84,33 @@ class SubscriptionAPIView(generics.CreateAPIView):
 
         return Response({"message": message}, status=status.HTTP_200_OK)
 
+
+class CoursePaymentCreateAPIView(generics.CreateAPIView):
+    serializer_class = CoursePaymentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        try:
+            course_id = request.data.get('course_id')
+            course = get_object_or_404(Course, id=course_id)
+
+            existing_payment = CoursePayment.objects.filter(
+                user=request.user,
+                course=course,
+                status='pending'
+            ).first()
+
+            if existing_payment:
+                serializer = self.get_serializer(existing_payment)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            payment = create_course_payment(request.user, course)
+            serializer = self.get_serializer(payment)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
