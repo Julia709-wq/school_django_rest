@@ -8,6 +8,7 @@ from school.serializers import CourseSerializer, LessonSerializer, CoursePayment
 from school.services import create_course_payment
 from users.permissions import IsModer, IsOwner, IsOwnerAndNotModer
 from school.paginators import SchoolPaginator
+from school.tasks import send_course_update_notification
 
 
 
@@ -32,6 +33,22 @@ class CourseViewSet(viewsets.ModelViewSet):
             self.permission_classes = [IsOwnerAndNotModer, ]
         return super().get_permissions()
 
+    def perform_update(self, serializer):
+        old_course = self.get_object()
+        course = serializer.save()
+
+        excluded_fields = ['updated_at', 'created_at', 'owner']
+        changed_fields = []
+
+        for field in course._meta.fields:
+            if field.name not in excluded_fields:
+                old_value = getattr(old_course, field.name)
+                new_value = getattr(course, field.name)
+                if old_value != new_value:
+                    changed_fields.append(field.name)
+
+        if changed_fields:
+            send_course_update_notification.delay(course.id)
 
 class LessonCreateAPIView(generics.CreateAPIView):
     serializer_class = LessonSerializer
