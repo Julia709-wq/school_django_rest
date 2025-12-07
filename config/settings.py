@@ -1,6 +1,8 @@
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+from datetime import timedelta
+from celery.schedules import crontab
 
 load_dotenv(override=True)
 
@@ -22,7 +24,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'rest_framework_simplejwt',
     'django_filters',
+    'drf_yasg',
+    'corsheaders',
+    'django_celery_beat',
+
     'users',
     'school',
 ]
@@ -35,6 +42,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -86,7 +94,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 USE_TZ = True
@@ -105,3 +113,58 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ]
 }
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+}
+
+# CORS_ALLOWED_ORIGINS = [
+#     '<http://localhost:8000>',
+# ]
+#
+# CORS_ALLOW_ALL_ORIGINS = False
+
+STRIPE_API_KEY = os.getenv('STRIPE_API_KEY')
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
+
+FRONTEND_URL = 'http://localhost:8000'
+
+EMAIL_HOST = 'smtp.yandex.ru'
+EMAIL_PORT = 465
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+
+SERVER_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
+CELERY_DEFAULT_BACKEND = os.getenv('CELERY_DEFAULT_BACKEND')
+
+CELERY_BEAT_SCHEDULE = {
+    'deactivate-inactive-users-daily': {
+        'task': 'school.tasks.deactivate_inactive_users',
+        'schedule': crontab(hour=3, minute=0),
+        'options': {
+            'expires': 300,
+        }
+    }
+}
+
+CELERY_BEAT_SCHEDULER = 'celery.beat.PersistentScheduler'
